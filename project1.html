@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagnóstico: Formulación y Evaluación de Proyectos</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Fuentes -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&family=Merriweather:wght@700&display=swap"
+        rel="stylesheet">
+    <!-- Iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <style>
+        /* Estilos base por si falla Tailwind */
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f3f4f6;
+            color: #1f2937;
+        }
+
+        h1,
+        h2,
+        .serif {
+            font-family: 'Merriweather', serif;
+        }
+
+        canvas {
+            display: none;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Estilos personalizados para feedback visual */
+        .option-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.8;
+        }
+
+        .correct-answer {
+            background-color: #dcfce7 !important;
+            border-color: #22c55e !important;
+            color: #14532d !important;
+        }
+
+        .wrong-answer {
+            background-color: #fee2e2 !important;
+            border-color: #ef4444 !important;
+            color: #7f1d1d !important;
+        }
+    </style>
+</head>
+
+<body class="min-h-screen flex items-center justify-center p-4 bg-gray-100">
+
+    <!-- Contenedor Principal -->
+    <div class="bg-white w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden relative" id="mainContainer"
+        style="min-height: 500px;">
+
+        <!-- Header -->
+        <div class="bg-slate-800 p-6 text-white text-center relative overflow-hidden">
+            <div class="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
+                <i class="fas fa-project-diagram absolute -left-10 -top-10 text-9xl"></i>
+                <i class="fas fa-chart-line absolute -right-10 -bottom-10 text-9xl"></i>
+            </div>
+            <h1 class="text-2xl md:text-3xl font-bold relative z-10">Evaluación Diagnóstica</h1>
+            <p class="text-slate-300 mt-2 relative z-10">Formulación y Evaluación de Proyectos de Inversión</p>
+        </div>
+
+        <!-- PANTALLA 1: Bienvenida -->
+        <div id="welcomeScreen" class="p-8 md:p-12 text-center">
+            <div class="mb-6">
+                <i class="fas fa-user-graduate text-6xl text-slate-700 mb-4"></i>
+                <h2 class="text-2xl text-gray-800 mb-2">Bienvenido al Curso</h2>
+                <p class="text-gray-600 mb-6 max-w-lg mx-auto">
+                    Esta prueba de <strong>15 preguntas</strong> evaluará sus conocimientos previos sobre el Ciclo del
+                    Proyecto, MGA, Estudios de Mercado, Técnicos y Financieros.
+                </p>
+            </div>
+
+            <div class="max-w-sm mx-auto bg-gray-50 p-6 rounded-lg border border-gray-200">
+                <label class="block text-left text-sm font-bold text-gray-700 mb-2" for="username">Nombre Completo (para
+                    el certificado):</label>
+                <input type="text" id="username"
+                    class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition mb-4"
+                    placeholder="Ej. Ing. Juan Pérez">
+
+                <button onclick="startQuiz()"
+                    class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition transform hover:scale-105 shadow-md flex items-center justify-center">
+                    Iniciar Diagnóstico <i class="fas fa-arrow-right ml-2"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- PANTALLA 2: Preguntas -->
+        <div id="quizScreen" class="hidden flex flex-col h-full">
+            <!-- Barra de Progreso -->
+            <div class="w-full bg-gray-200 h-2">
+                <div id="progressBar" class="bg-blue-600 h-2 transition-all duration-300" style="width: 0%"></div>
+            </div>
+
+            <div class="p-6 md:p-10 flex-grow">
+                <div
+                    class="flex justify-between items-center mb-4 text-sm text-gray-500 font-bold uppercase tracking-wide">
+                    <span id="topicIndicator" class="text-blue-600">Tema: ...</span>
+                    <span id="questionCounter">Pregunta 1/15</span>
+                </div>
+
+                <h3 id="questionText" class="text-xl md:text-2xl font-bold text-gray-800 mb-6 leading-relaxed">
+                    <!-- Pregunta cargada vía JS -->
+                </h3>
+
+                <div id="optionsContainer" class="grid gap-3">
+                    <!-- Opciones cargadas vía JS -->
+                </div>
+            </div>
+
+            <div class="p-4 bg-gray-50 border-t flex justify-end">
+                <button id="nextBtn" onclick="nextQuestion()" disabled
+                    class="bg-gray-400 text-white font-bold py-2 px-8 rounded opacity-50 cursor-not-allowed transition">
+                    Siguiente
+                </button>
+            </div>
+        </div>
+
+        <!-- PANTALLA 3: Resultados -->
+        <div id="resultScreen" class="hidden p-8 md:p-12 text-center">
+            <h2 class="text-3xl font-bold text-gray-800 mb-2">Resultados del Diagnóstico</h2>
+            <p id="scoreText" class="text-xl text-blue-600 font-bold mb-8">Puntaje Final: 0/100</p>
+
+            <div class="grid md:grid-cols-2 gap-8 items-start">
+                <!-- Columna Feedback -->
+                <div class="text-left space-y-4">
+                    <div class="bg-blue-50 p-4 rounded-lg border-l-4 border-blue-500">
+                        <h4 class="font-bold text-blue-700">Análisis de Desempeño</h4>
+                        <p id="feedbackText" class="text-sm text-gray-600 mt-1">...</p>
+                    </div>
+
+                    <div class="bg-white p-4 rounded border">
+                        <h5 class="font-bold text-gray-700 mb-2 text-sm">Competencias Evaluadas:</h5>
+                        <ul class="text-sm text-gray-500 space-y-1">
+                            <li><i class="fas fa-check text-green-500 mr-2"></i>Identificación (MGA/Marco Lógico)</li>
+                            <li><i class="fas fa-check text-green-500 mr-2"></i>Estudios de Prefactibilidad</li>
+                            <li><i class="fas fa-check text-green-500 mr-2"></i>Evaluación Financiera (VPN, TIR)</li>
+                            <li><i class="fas fa-check text-green-500 mr-2"></i>Gerencia (PMI)</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Columna Badge -->
+                <div class="flex flex-col items-center justify-center">
+                    <p class="text-xs font-bold text-gray-400 mb-2 uppercase tracking-widest">Su Insignia Digital</p>
+
+                    <!-- Imagen del Badge -->
+                    <div class="relative group">
+                        <img id="badgeImage" class="w-64 h-auto shadow-xl rounded-lg border-4 border-white"
+                            alt="Generando certificado..." />
+                        <div
+                            class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-20 opacity-0 group-hover:opacity-100 transition rounded-lg">
+                            <i class="fas fa-search-plus text-white text-3xl"></i>
+                        </div>
+                    </div>
+
+                    <a id="downloadLink" href="#" download="Insignia_Diagnostico.png"
+                        class="mt-6 w-full md:w-auto inline-flex justify-center items-center bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-full shadow-lg transition">
+                        <i class="fas fa-download mr-2"></i> Descargar Imagen
+                    </a>
+
+                    <button onclick="location.reload()"
+                        class="mt-4 text-gray-500 hover:text-blue-600 text-sm font-medium underline">
+                        Volver a intentar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Canvas Oculto para Generación de Badge -->
+    <canvas id="badgeCanvas" width="800" height="600"></canvas>
+
+    <script>
+        // --- BASE DE DATOS DE PREGUNTAS (15 Ítems) ---
+        const questions = [
+            {
+                id: 1,
+                topic: "Ciclo del Proyecto",
+                question: "En el ciclo de vida de un proyecto, ¿cuál es el objetivo principal de la etapa de 'Pre-factibilidad'?",
+                options: [
+                    "Diseñar los planos finales de construcción.",
+                    "Evaluar alternativas viables con información secundaria para descartar las no rentables.",
+                    "Operar el proyecto para generar ingresos.",
+                    "Realizar el acta de constitución del proyecto."
+                ],
+                answer: 1,
+                points: 5
+            },
+            {
+                id: 2,
+                topic: "Identificación (MGA)",
+                question: "Según la metodología del Marco Lógico y la MGA, el 'Árbol de Problemas' tiene como función principal:",
+                options: [
+                    "Definir los objetivos de rentabilidad.",
+                    "Identificar la relación causal entre las raíces (causas), el tronco (problema central) y las ramas (efectos).",
+                    "Listar los recursos financieros necesarios.",
+                    "Crear el cronograma de actividades."
+                ],
+                answer: 1,
+                points: 5
+            },
+            {
+                id: 3,
+                topic: "Estudio de Mercado",
+                question: "¿Qué representa la 'Demanda Insatisfecha' en un estudio de mercado?",
+                options: [
+                    "La cantidad de bienes que los consumidores no pueden comprar por falta de dinero.",
+                    "La parte del mercado que la oferta actual no cubre y que el proyecto podría captar.",
+                    "El total de ventas de la competencia.",
+                    "La demanda futura proyectada sin considerar precios."
+                ],
+                answer: 1,
+                points: 5
+            },
+            {
+                id: 4,
+                topic: "Estudio Técnico",
+                question: "Al determinar el 'Tamaño del Proyecto', ¿cuál factor suele ser una restricción determinante?",
+                options: [
+                    "El color del logotipo.",
+                    "La disponibilidad de materias primas e insumos en la localización elegida.",
+                    "El nombre del gerente del proyecto.",
+                    "La metodología de evaluación ex-post."
+                ],
+                answer: 1,
+                points: 5
+            },
+            {
+                id: 5,
+                topic: "Matemáticas Financieras",
+                question: "Si el Valor Presente Neto (VPN) de un proyecto es igual a cero (VPN = 0), esto significa que:",
+                options: [
+                    "El proyecto pierde dinero.",
+                    "El proyecto no es viable.",
+                    "El proyecto recupera la inversión y renta exactamente lo mismo que la Tasa de Oportunidad (TIO).",
+                    "El proyecto genera ganancias extraordinarias."
+                ],
+                answer: 2,
+                points: 10
+            },
+            {
+                id: 6,
+                topic: "Indicadores Financieros",
+                question: "La Tasa Interna de Retorno (TIR) se define técnicamente como:",
+                options: [
+                    "La tasa de interés que cobra el banco.",
+                    "La rentabilidad promedio del mercado.",
+                    "La tasa de descuento que hace que el VPN sea igual a cero.",
+                    "El porcentaje de utilidad neta sobre ventas."
+                ],
+                answer: 2,
+                points: 10
+            },
+            {
+                id: 7,
+                topic: "Evaluación Económica",
+                question: "¿Cuál es la principal diferencia entre la Evaluación Financiera (Privada) y la Evaluación Económica (Social)?",
+                options: [
+                    "No hay diferencia, son lo mismo.",
+                    "La financiera usa precios de mercado y la económica usa precios cuenta (sombra) para medir el bienestar social.",
+                    "La financiera es para el gobierno y la económica para privados.",
+                    "La financiera no paga impuestos."
+                ],
+                answer: 1,
+                points: 10
+            },
+            {
+                id: 8,
+                topic: "Gerencia (PMI)",
+                question: "Según el PMBOK, ¿cuál es el documento que autoriza formalmente la existencia de un proyecto?",
+                options: [
+                    "El Cronograma (Gantt).",
+                    "El Presupuesto.",
+                    "El Acta de Constitución del Proyecto (Project Charter).",
+                    "El Análisis de Riesgos."
+                ],
+                answer: 2,
+                points: 5
+            },
+            {
+                id: 9,
+                topic: "Estudio Legal",
+                question: "¿Por qué es crítico el estudio legal en la etapa de formulación?",
+                options: [
+                    "Para contratar a los abogados más caros.",
+                    "Para determinar la viabilidad normativa (uso de suelos, ambiental) antes de realizar inversiones mayores.",
+                    "Para demandar a la competencia.",
+                    "Para redactar los correos electrónicos."
+                ],
+                answer: 1,
+                points: 5
+            },
+            {
+                id: 10,
+                topic: "Costos e Inversiones",
+                question: "¿Qué diferencia existe entre Inversión (CAPEX) y Costo Operativo (OPEX)?",
+                options: [
+                    "La Inversión ocurre antes de operar (activos); el Costo Operativo es recurrente durante la producción.",
+                    "La inversión es menor que el costo.",
+                    "El costo operativo se recupera con la venta de activos.",
+                    "No existe diferencia contable."
+                ],
+                answer: 0,
+                points: 5
+            },
+            {
+                id: 11,
+                topic: "Identificación de Proyectos",
+                question: "En la construcción del Árbol de Objetivos, las 'Causas' del problema central se transforman en:",
+                options: [
+                    "Fines.",
+                    "Medios (Objetivos Específicos).",
+                    "Indicadores de Gestión.",
+                    "Supuestos."
+                ],
+                answer: 1,
+                points: 5
+            },
+            {
+                id: 12,
+                topic: "Riesgos",
+                question: "El Análisis de Sensibilidad en la evaluación financiera busca:",
+                options: [
+                    "Saber qué sienten los empleados.",
+                    "Medir cómo cambia la rentabilidad (VPN/TIR) si varían variables críticas (precio, costos).",
+                    "Calcular los impuestos exactos.",
+                    "Determinar la ubicación geográfica."
+                ],
+                answer: 1,
+                points: 10
+            },
+            {
+                id: 13,
+                topic: "Estudio Administrativo",
+                question: "¿Qué define el 'Organigrama' en el estudio administrativo?",
+                options: [
+                    "El flujo de caja.",
+                    "La estructura jerárquica y las líneas de autoridad/responsabilidad.",
+                    "El proceso productivo de la maquinaria.",
+                    "La lista de proveedores."
+                ],
+                answer: 1,
+                points: 5
+            },
+            {
+                id: 14,
+                topic: "Evaluación Ex-Post",
+                question: "¿Cuál es el propósito de la Evaluación Ex-Post?",
+                options: [
+                    "Detener el proyecto.",
+                    "Pedir más dinero al banco.",
+                    "Verificar si se lograron los objetivos e impactos previstos una vez finalizado u operando.",
+                    "Calcular el presupuesto inicial."
+                ],
+                answer: 2,
+                points: 5
+            },
+            {
+                id: 15,
+                topic: "Flujo de Caja",
+                question: "Para calcular el Flujo de Caja Libre, a la Utilidad Operativa después de impuestos se le debe:",
+                options: [
+                    "Restar los costos fijos.",
+                    "Sumar la Depreciación y Amortización (pues no son salidas reales de efectivo).",
+                    "Restar las ventas.",
+                    "Sumar los intereses."
+                ],
+                answer: 1,
+                points: 10
+            }
+        ];
+
+        // --- LÓGICA DE CONTROL ---
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let maxScore = questions.reduce((acc, curr) => acc + curr.points, 0);
+        let userName = "";
+
+        // Elementos UI
+        const welcomeScreen = document.getElementById('welcomeScreen');
+        const quizScreen = document.getElementById('quizScreen');
+        const resultScreen = document.getElementById('resultScreen');
+
+        const questionText = document.getElementById('questionText');
+        const optionsContainer = document.getElementById('optionsContainer');
+        const topicIndicator = document.getElementById('topicIndicator');
+        const questionCounter = document.getElementById('questionCounter');
+        const nextBtn = document.getElementById('nextBtn');
+        const progressBar = document.getElementById('progressBar');
+
+        function startQuiz() {
+            const inputName = document.getElementById('username').value;
+            if (inputName.trim() === "") {
+                alert("Por favor, ingrese su nombre para el certificado.");
+                return;
+            }
+            userName = inputName;
+            welcomeScreen.classList.add('hidden');
+            quizScreen.classList.remove('hidden');
+            renderQuestion();
+        }
+
+        function renderQuestion() {
+            const q = questions[currentQuestionIndex];
+
+            topicIndicator.innerText = `Tema: ${q.topic}`;
+            questionCounter.innerText = `Pregunta ${currentQuestionIndex + 1}/${questions.length}`;
+            questionText.innerText = q.question;
+
+            // Barra de progreso
+            const progress = ((currentQuestionIndex) / questions.length) * 100;
+            progressBar.style.width = `${progress}%`;
+
+            optionsContainer.innerHTML = '';
+            nextBtn.disabled = true;
+            nextBtn.classList.add('opacity-50', 'cursor-not-allowed', 'bg-gray-400');
+            nextBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+
+            q.options.forEach((opt, index) => {
+                const btn = document.createElement('button');
+                btn.className = "option-btn w-full text-left p-4 rounded-lg border-2 border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition duration-200 flex items-center group bg-white";
+                btn.onclick = () => selectOption(index, btn);
+
+                const icon = document.createElement('i');
+                icon.className = "far fa-circle text-gray-400 mr-3 group-hover:text-blue-500 text-xl";
+
+                const span = document.createElement('span');
+                span.innerText = opt;
+                span.className = "text-gray-700 font-medium group-hover:text-blue-900";
+
+                btn.appendChild(icon);
+                btn.appendChild(span);
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        function selectOption(selectedIndex, btnElement) {
+            // Bloquear todos los botones
+            const buttons = optionsContainer.getElementsByTagName('button');
+            for (let btn of buttons) {
+                btn.disabled = true;
+                btn.classList.add('opacity-70');
+            }
+
+            const q = questions[currentQuestionIndex];
+            const isCorrect = selectedIndex === q.answer;
+
+            if (isCorrect) {
+                btnElement.classList.add('correct-answer');
+                btnElement.querySelector('i').className = "fas fa-check-circle text-green-600 mr-3 text-xl";
+                score += q.points;
+            } else {
+                btnElement.classList.add('wrong-answer');
+                btnElement.querySelector('i').className = "fas fa-times-circle text-red-600 mr-3 text-xl";
+
+                // Mostrar correcta
+                const correctBtn = buttons[q.answer];
+                correctBtn.classList.add('correct-answer');
+                correctBtn.querySelector('i').className = "fas fa-check-circle text-green-600 mr-3 text-xl";
+            }
+
+            // Activar botón Siguiente
+            nextBtn.disabled = false;
+            nextBtn.classList.remove('opacity-50', 'cursor-not-allowed', 'bg-gray-400');
+            nextBtn.classList.add('bg-blue-600', 'hover:bg-blue-700', 'text-white', 'shadow-md');
+
+            if (currentQuestionIndex === questions.length - 1) {
+                nextBtn.innerText = "Ver Resultados";
+            }
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < questions.length) {
+                renderQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        function showResults() {
+            quizScreen.classList.add('hidden');
+            resultScreen.classList.remove('hidden');
+
+            const percentage = (score / maxScore) * 100;
+            const scoreDisplay = document.getElementById('scoreText');
+            const feedbackDisplay = document.getElementById('feedbackText');
+
+            scoreDisplay.innerText = `Puntaje Final: ${score} / ${maxScore} (${percentage.toFixed(0)}%)`;
+
+            let feedback = "";
+            let rank = "";
+            let color = "";
+
+            if (percentage >= 90) {
+                feedback = "¡Excelente! Tienes un dominio sólido de los conceptos de formulación y evaluación. Estás listo para liderar proyectos complejos.";
+                rank = "EXPERTO";
+                color = "#FFD700"; // Gold
+            } else if (percentage >= 70) {
+                feedback = "Muy buen trabajo. Conoces los fundamentos y metodologías clave. Refuerza algunos conceptos financieros para perfeccionar tu perfil.";
+                rank = "AVANZADO";
+                color = "#C0C0C0"; // Silver
+            } else {
+                feedback = "Inicio del camino. Tienes nociones básicas, pero es recomendable repasar la metodología MGA y los indicadores financieros.";
+                rank = "INICIAL";
+                color = "#CD7F32"; // Bronze
+            }
+            feedbackDisplay.innerText = feedback;
+
+            // Generar Badge después de un breve delay para asegurar carga de fuentes
+            setTimeout(() => generateBadge(userName, percentage, rank, color), 500);
+        }
+
+        function generateBadge(name, percentage, rank, accentColor) {
+            const canvas = document.getElementById('badgeCanvas');
+            const ctx = canvas.getContext('2d');
+
+            // Limpiar
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 1. Fondo (Gradiente Azul Profesional)
+            const gradient = ctx.createLinearGradient(0, 0, 0, 600);
+            gradient.addColorStop(0, '#1e3a8a');
+            gradient.addColorStop(1, '#172554');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 800, 600);
+
+            // 2. Marco
+            ctx.lineWidth = 15;
+            ctx.strokeStyle = accentColor;
+            ctx.strokeRect(30, 30, 740, 540);
+
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = "rgba(255,255,255,0.3)";
+            ctx.strokeRect(45, 45, 710, 510);
+
+            // 3. Textos
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#ffffff';
+
+            ctx.font = 'bold 36px Arial'; // Usar fuentes estándar para canvas
+            ctx.fillText('DIAGNÓSTICO DE COMPETENCIAS', 400, 120);
+
+            ctx.font = '28px Arial';
+            ctx.fillStyle = '#cbd5e1';
+            ctx.fillText('Formulación y Evaluación de Proyectos', 400, 170);
+
+            ctx.font = 'italic 24px Arial';
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillText('Otorgado a:', 400, 240);
+
+            ctx.font = 'bold 48px Arial';
+            ctx.fillStyle = '#ffffff';
+            ctx.fillText(name, 400, 300);
+
+            // Línea
+            ctx.beginPath();
+            ctx.moveTo(200, 330);
+            ctx.lineTo(600, 330);
+            ctx.strokeStyle = accentColor;
+            ctx.lineWidth = 4;
+            ctx.stroke();
+
+            // Puntaje
+            ctx.font = 'bold 60px Arial';
+            ctx.fillStyle = accentColor;
+            ctx.fillText(`${percentage.toFixed(0)}%`, 400, 420);
+
+            ctx.font = '20px Arial';
+            ctx.fillStyle = '#ffffff';
+            ctx.fillText('NIVEL DE COMPETENCIA:', 400, 460);
+
+            ctx.font = 'bold 32px Arial';
+            ctx.fillStyle = accentColor;
+            ctx.fillText(rank, 400, 500);
+
+            // Fecha
+            const date = new Date().toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
+            ctx.font = '18px Arial';
+            ctx.fillStyle = '#64748b';
+            ctx.fillText(`Fecha de emisión: ${date}`, 400, 560);
+
+            // Generar Imagen
+            try {
+                const dataURL = canvas.toDataURL('image/png');
+                const badgeImg = document.getElementById('badgeImage');
+                badgeImg.src = dataURL;
+                const downloadLink = document.getElementById('downloadLink');
+                downloadLink.href = dataURL;
+            } catch (e) {
+                console.error("Error generando imagen canvas:", e);
+                document.getElementById('badgeImage').alt = "Error al generar la imagen. Use un navegador moderno.";
+            }
+        }
+    </script>
+</body>
+
+</html>
